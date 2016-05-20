@@ -398,4 +398,26 @@ describe('jquery-typeahead.js', function() {
       });
     });
   });
+
+  describe('on display', function() {
+    it('should add accessibility attributes', function (done) {
+      driver.run(function*() {
+        var suggestionsList;
+        var suggestions;
+
+        yield input.click();
+        yield input.type('mi');
+
+        suggestionsList = yield dropdown.elementsByClassName('aa-suggestions');
+        suggestions = yield dropdown.elementsByClassName('aa-suggestion');
+
+        expect(yield suggestionsList.getAttribute("tabindex")).to.equal('-1');
+        expect(yield suggestionsList.getAttribute("role")).to.equal('listbox');
+
+        expect(yield suggestions[0].getAttribute("role")).to.equal('option');
+
+        done();
+      });
+    });
+  });
 });

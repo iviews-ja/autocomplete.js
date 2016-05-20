@@ -1535,6 +1535,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return function() { return counter++; };
 	  })(),
 
+	  // idea taken from http://slavik.meltser.info/?p=142
+	  guid: function () {
+	    function _p8(s) {
+	      var p = (Math.random().toString(16) + '000000000').substr(2, 8);
+	      return s ? '-' + p.substr(0, 4) + '-' + p.substr(4, 4) : p;
+	    }
+
+	    return 'aa-' + _p8() + _p8(true) + _p8(true) + _p8();
+	  },
+
 	  templatify: function templatify(obj) {
 	    if (this.isFunction(obj)) {
 	      return obj;
@@ -1680,22 +1690,26 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  _onDatasetRendered: function onDatasetRendered() {
 	    this._updateHint();
+	    this.input.setAriaExpanded(this.dropdown.isVisible());
 
 	    this.eventBus.trigger('updated');
 	  },
 
 	  _onOpened: function onOpened() {
 	    this._updateHint();
+	    this.input.setAriaExpanded(true);
 
 	    this.eventBus.trigger('opened');
 	  },
 
 	  _onShown: function onShown() {
+	    this.input.setAriaExpanded(true);
 	    this.eventBus.trigger('shown');
 	  },
 
 	  _onClosed: function onClosed() {
 	    this.input.clearHint();
+	    this.input.setAriaExpanded(false);
 
 	    this.eventBus.trigger('closed');
 	  },
@@ -1901,10 +1915,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this.dropdown.empty();
 	      }
 	    }
+	    this.input.$input.attr('aria-expanded', 'true');
 	    this.dropdown.open();
 	  },
 
 	  close: function close() {
+	    this.input.$input.attr('aria-expanded', 'false');
 	    this.dropdown.close();
 	  },
 
@@ -1957,14 +1973,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if (options.templates && options.templates.dropdownMenu) {
 	    $dropdown.html(_.templatify(options.templates.dropdownMenu)());
 	  }
+
 	  $hint = $input.clone().css(css.hint).css(getBackgroundStyles($input));
 
 	  $hint
 	    .val('')
 	    .addClass(_.className(options.cssClasses.prefix, options.cssClasses.hint, true))
-	    .removeAttr('id name placeholder required')
+	    .removeAttr('id name placeholder required aria-expanded')
 	    .prop('readonly', true)
-	    .attr({autocomplete: 'off', spellcheck: 'false', tabindex: -1});
+	    .attr({autocomplete: 'off', spellcheck: 'false', tabindex: -1, 'aria-hidden': 'true'});
 	  if ($hint.removeData) {
 	    $hint.removeData();
 	  }
@@ -1975,12 +1992,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	    dir: $input.attr('dir'),
 	    autocomplete: $input.attr('autocomplete'),
 	    spellcheck: $input.attr('spellcheck'),
-	    style: $input.attr('style')
+	    style: $input.attr('style'),
+	    role: $input.attr('role'),
+	    'aria-autocomplete': $input.attr('aria-autocomplete'),
+	    'aria-expanded': $input.attr('aria-expanded'),
+	    'aria-owns': $input.attr('aria-owns')
 	  });
+
+	  // generate unique Id for dropdown to reference it in aria-owns on input field
+	  var guid = _.guid();
+	  $dropdown.attr('id', guid);
 
 	  $input
 	    .addClass(_.className(options.cssClasses.prefix, options.cssClasses.input, true))
-	    .attr({autocomplete: 'off', spellcheck: false})
+	    .attr({autocomplete: 'off', spellcheck: false, role: 'combobox',
+	      'aria-autocomplete': options.hint ? 'both' : 'list', 'aria-owns': guid, 'aria-expanded': 'false'})
 	    .css(options.hint ? css.input : css.inputWithNoHint);
 
 	  // ie7 does not like it when dir is set to auto
@@ -2369,6 +2395,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return true;
 	  },
 
+	  setAriaExpanded: function(value) {
+	    this.$input.attr('aria-expanded', value);
+	  },
+
 	  destroy: function destroy() {
 	    this.$hint.off('.aa');
 	    this.$input.off('.aa');
@@ -2634,6 +2664,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	var queueIndex = -1;
 
 	function cleanUpNextTick() {
+	    if (!draining || !currentQueue) {
+	        return;
+	    }
 	    draining = false;
 	    if (currentQueue.length) {
 	        queue = currentQueue.concat(queue);
@@ -3282,11 +3315,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	'use strict';
 
 	module.exports = {
-	  wrapper: '<span class="%ROOT%"></span>',
-	  dropdown: '<span class="%PREFIX%-%DROPDOWN_MENU%"></span>',
-	  dataset: '<div class="%PREFIX%-%DATASET%-%CLASS%"></div>',
-	  suggestions: '<span class="%PREFIX%-%SUGGESTIONS%"></span>',
-	  suggestion: '<div class="%PREFIX%-%SUGGESTION%"></div>'
+	  wrapper: '<span class="%ROOT%" tabindex="-1"></span>',
+	  dropdown: '<span class="%PREFIX%-%DROPDOWN_MENU%" role="listbox"></span>',
+	  dataset: '<div class="%PREFIX%-%DATASET%-%CLASS%" role="presentation"></div>',
+	  suggestions: '<span class="%PREFIX%-%SUGGESTIONS%" role="presentation"></span>',
+	  suggestion: '<div class="%PREFIX%-%SUGGESTION%" role="option"></div>'
 	};
 
 

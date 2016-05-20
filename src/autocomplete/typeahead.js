@@ -118,22 +118,26 @@ _.mixin(Typeahead.prototype, {
 
   _onDatasetRendered: function onDatasetRendered() {
     this._updateHint();
+    this.input.setAriaExpanded(this.dropdown.isVisible());
 
     this.eventBus.trigger('updated');
   },
 
   _onOpened: function onOpened() {
     this._updateHint();
+    this.input.setAriaExpanded(true);
 
     this.eventBus.trigger('opened');
   },
 
   _onShown: function onShown() {
+    this.input.setAriaExpanded(true);
     this.eventBus.trigger('shown');
   },
 
   _onClosed: function onClosed() {
     this.input.clearHint();
+    this.input.setAriaExpanded(false);
 
     this.eventBus.trigger('closed');
   },
@@ -339,10 +343,12 @@ _.mixin(Typeahead.prototype, {
         this.dropdown.empty();
       }
     }
+    this.input.$input.attr('aria-expanded', 'true');
     this.dropdown.open();
   },
 
   close: function close() {
+    this.input.$input.attr('aria-expanded', 'false');
     this.dropdown.close();
   },
 
@@ -395,14 +401,15 @@ function buildDom(options) {
   if (options.templates && options.templates.dropdownMenu) {
     $dropdown.html(_.templatify(options.templates.dropdownMenu)());
   }
+
   $hint = $input.clone().css(css.hint).css(getBackgroundStyles($input));
 
   $hint
     .val('')
     .addClass(_.className(options.cssClasses.prefix, options.cssClasses.hint, true))
-    .removeAttr('id name placeholder required')
+    .removeAttr('id name placeholder required aria-expanded')
     .prop('readonly', true)
-    .attr({autocomplete: 'off', spellcheck: 'false', tabindex: -1});
+    .attr({autocomplete: 'off', spellcheck: 'false', tabindex: -1, 'aria-hidden': 'true'});
   if ($hint.removeData) {
     $hint.removeData();
   }
@@ -413,12 +420,21 @@ function buildDom(options) {
     dir: $input.attr('dir'),
     autocomplete: $input.attr('autocomplete'),
     spellcheck: $input.attr('spellcheck'),
-    style: $input.attr('style')
+    style: $input.attr('style'),
+    role: $input.attr('role'),
+    'aria-autocomplete': $input.attr('aria-autocomplete'),
+    'aria-expanded': $input.attr('aria-expanded'),
+    'aria-owns': $input.attr('aria-owns')
   });
+
+  // generate unique Id for dropdown to reference it in aria-owns on input field
+  var guid = _.guid();
+  $dropdown.attr('id', guid);
 
   $input
     .addClass(_.className(options.cssClasses.prefix, options.cssClasses.input, true))
-    .attr({autocomplete: 'off', spellcheck: false})
+    .attr({autocomplete: 'off', spellcheck: false, role: 'combobox',
+      'aria-autocomplete': options.hint ? 'both' : 'list', 'aria-owns': guid, 'aria-expanded': 'false'})
     .css(options.hint ? css.input : css.inputWithNoHint);
 
   // ie7 does not like it when dir is set to auto

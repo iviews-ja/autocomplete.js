@@ -69,6 +69,16 @@ module.exports = {
     return function() { return counter++; };
   })(),
 
+  // idea taken from http://slavik.meltser.info/?p=142
+  guid: function () {
+    function _p8(s) {
+      var p = (Math.random().toString(16) + '000000000').substr(2, 8);
+      return s ? '-' + p.substr(0, 4) + '-' + p.substr(4, 4) : p;
+    }
+
+    return 'aa-' + _p8() + _p8(true) + _p8(true) + _p8();
+  },
+
   templatify: function templatify(obj) {
     if (this.isFunction(obj)) {
       return obj;

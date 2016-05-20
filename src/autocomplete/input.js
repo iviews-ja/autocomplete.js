@@ -279,6 +279,10 @@ _.mixin(Input.prototype, EventEmitter, {
     return true;
   },
 
+  setAriaExpanded: function(value) {
+    this.$input.attr('aria-expanded', value);
+  },
+
   destroy: function destroy() {
     this.$hint.off('.aa');
     this.$input.off('.aa');

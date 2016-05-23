@@ -72,7 +72,7 @@ function Input(o) {
   this.query = this.$input.val();
 
   // helps with calculating the width of the input's value
-  this.$overflowHelper = buildOverflowHelper(this.$input);
+  this.$overflowHelper = this.$hint.length === 0 ? null : buildOverflowHelper(this.$input);
 }
 
 // static methods
@@ -249,6 +249,11 @@ _.mixin(Input.prototype, EventEmitter, {
   },
 
   hasOverflow: function hasOverflow() {
+    //hints are disabled by the options
+    if (this.$hint.length === 0) {
+      return false;
+    }
+
     // 2 is arbitrary, just picking a small number to handle edge cases
     var constraint = this.$input.width() - 2;
 
